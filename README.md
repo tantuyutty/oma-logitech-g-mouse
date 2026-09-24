@@ -48,7 +48,7 @@ The widget automatically reconnects after startup or a receiver reconnect. It wa
 
 ## Troubleshooting
 
-On Omarchy and other systemd desktop sessions, `systemd-logind` normally grants the logged-in user access to `/dev/hidraw*` through `uaccess`.
+On systemd desktop sessions, `systemd-logind` grants the active user access only after a matching udev rule tags the hidraw interface with `uaccess`; logind does not tag `/dev/hidraw*` automatically.
 
 If the widget stays disconnected, first check whether the native controller can see the mouse:
 
@@ -56,7 +56,7 @@ If the widget stays disconnected, first check whether the native controller can 
 ~/.config/omarchy/plugins/tantuyu.logitech-g-mouse/bin/logitech-g-daemon --once
 ```
 
-If it returns `EACCES: Permission denied`, your session lacks HID device access. This can occur in containers, headless sessions, or systems without `systemd-logind`. Keep the normal `uaccess` path when available. For a headless system, grant access only to a dedicated local group:
+If it reports `Unable to open Logitech HID++ device` with `Permission denied`, the matching interface lacks access for your session. The error names the affected `/dev/hidrawN` path and notes when a desktop-session `uaccess` rule is required. Containers, headless sessions, and systems without `systemd-logind` cannot use that desktop-session mechanism. For a headless system, grant access only to a dedicated local group:
 
 ```bash
 sudo groupadd --system logitech-hidraw

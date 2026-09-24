@@ -48,7 +48,7 @@ omarchy restart shell
 
 ## 疑難排解
 
-Omarchy 與其他使用 systemd 的桌面會話通常會由 `systemd-logind` 透過 `uaccess` 自動授予登入使用者 `/dev/hidraw*` 的存取權。
+在使用 systemd 的桌面會話中，只有當相符的 udev 規則以 `uaccess` 標記 hidraw 介面後，`systemd-logind` 才會授予目前使用者存取權；logind 不會自動標記 `/dev/hidraw*`。
 
 若小工具持續顯示離線，先確認原生控制程式是否能偵測滑鼠：
 
@@ -56,7 +56,7 @@ Omarchy 與其他使用 systemd 的桌面會話通常會由 `systemd-logind` 透
 ~/.config/omarchy/plugins/tantuyu.logitech-g-mouse/bin/logitech-g-daemon --once
 ```
 
-如果回傳 `EACCES: Permission denied`，表示目前會話沒有 HID 裝置權限。容器、無桌面會話環境，或沒有 `systemd-logind` 的系統可能發生此情況。可用時請維持原本的 `uaccess` 作法；無桌面會話系統則只授予專用本機群組存取權：
+如果回傳 `Unable to open Logitech HID++ device` 與 `Permission denied`，表示目前會話無法存取相符介面。錯誤會指出受影響的 `/dev/hidrawN` 路徑，並在桌面會話需要 `uaccess` 規則時加以說明。容器、無桌面會話環境，或沒有 `systemd-logind` 的系統無法使用這套桌面會話機制；無桌面會話系統則只授予專用本機群組存取權：
 
 ```bash
 sudo groupadd --system logitech-hidraw
