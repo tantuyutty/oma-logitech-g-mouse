@@ -42,6 +42,8 @@ omarchy restart shell
 
 The widget automatically reconnects after startup or a receiver reconnect. It waits up to five seconds for the receiver to become ready.
 
+The panel, bar tooltip, and status labels follow Omarchy's selected language live: English and Traditional Chinese (`zh-TW`) are included; other languages fall back to English. Requires the shell's `qs.Commons.Translations` API. Plugin-manager metadata and settings-schema labels remain English.
+
 ## Screenshots
 
 | Sensor tab                                                                 | Buttons tab                                                            |

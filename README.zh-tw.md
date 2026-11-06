@@ -42,6 +42,8 @@ omarchy restart shell
 
 小工具會在開機或接收器重新連線後自動重連，最多等待五秒讓接收器完成初始化。
 
+面板、狀態列提示與狀態文字會即時跟隨 Omarchy 系統語言，提供英文與繁體中文（`zh-TW`），其他語言回退英文。宿主需提供 `qs.Commons.Translations` API。外掛管理介面的中繼資料及設定 schema 標籤仍為英文。
+
 ## 截圖
 
 | Sensor 分頁                                         | Buttons 分頁 tab                                |

@@ -8,6 +8,11 @@ BarWidget {
     id: root
     moduleName: "tantuyu.logitech-g-mouse"
 
+    Translations {
+        id: strings
+        directory: Qt.resolvedUrl("i18n")
+    }
+
     readonly property bool opened: panelLoader.item ? panelLoader.item.opened === true : false
     readonly property bool popoutSwitchClosing: panelLoader.item ? panelLoader.item.popoutSwitchClosing === true : false
 
@@ -76,13 +81,13 @@ BarWidget {
         active: false
         useActiveColor: false
         slotSize: Style.bar.iconSlot * (root.showPercentage && !vertical ? 2.2 : 1.0)
-        tooltipText: Model.barTooltip(mouse)
+        tooltipText: Model.barTooltip(mouse, strings.t, I18n.formatNumber)
         text: mouse.connected
             ? Model.batteryIcon(mouse.batteryPercentage, mouse.batteryStatus)
             : Model.mouseIcon()
         labelText: {
             if (!root.showPercentage || vertical) return "";
-            return mouse.connected ? Model.batteryText(mouse.batteryPercentage) : "Off";
+            return mouse.connected ? Model.batteryText(mouse.batteryPercentage, I18n.formatNumber) : strings.t("bar.off");
         }
         onPressed: function (buttonCode) {
             if (buttonCode === Qt.LeftButton) {

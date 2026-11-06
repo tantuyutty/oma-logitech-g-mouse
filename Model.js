@@ -119,22 +119,34 @@ function batteryIcon(percentage, status) {
   return defaultIcons[idx]
 }
 
-function batteryText(percentage) {
+function batteryText(percentage, fmt) {
   if (percentage === LEVEL_UNKNOWN) return "--"
-  return String(percentage) + "%"
+  return fmt(percentage) + "%"
 }
 
-function dpiText(dpiX, dpiY) {
+function dpiText(dpiX, dpiY, fmt) {
   if (dpiX <= 0) return "--"
-  if (dpiY > 0 && dpiY !== dpiX) return String(dpiX) + "×" + String(dpiY)
-  return String(dpiX)
+  if (dpiY > 0 && dpiY !== dpiX) return fmt(dpiX) + "×" + fmt(dpiY)
+  return fmt(dpiX)
 }
 
-function lodLabel(lod) {
-  if (lod === "low") return "Low"
-  if (lod === "medium") return "Medium"
-  if (lod === "high") return "High"
+function lodLabel(lod, tr) {
+  if (lod === "low") return tr("lod.low", "Low")
+  if (lod === "medium") return tr("lod.medium", "Medium")
+  if (lod === "high") return tr("lod.high", "High")
   return "--"
+}
+
+function batteryStatusLabel(status, tr) {
+  switch (status) {
+    case "discharging": return tr("battery.discharging", "Discharging")
+    case "charging": return tr("battery.charging", "Charging")
+    case "charging_slow": return tr("battery.chargingSlow", "Charging slowly")
+    case "full": return tr("battery.full", "Fully charged")
+    case "error": return tr("battery.error", "Battery error")
+    case "unknown":
+    default: return tr("battery.unknown", "Unknown")
+  }
 }
 
 function actuationLabel(level) {
@@ -152,15 +164,17 @@ function hapticsLabel(level) {
   return "L" + String(level)
 }
 
-function barTooltip(mouse) {
+function barTooltip(mouse, tr, fmt) {
   var name = (mouse && mouse.deviceName) ? mouse.deviceName : "Logitech G Mouse"
-  if (!mouse || !mouse.connected) return name + " (Disconnected)"
+  if (!mouse || !mouse.connected) return tr("tooltip.disconnected", "%1 (Disconnected)").replace("%1", name)
   var parts = [name]
   if (mouse.batteryPercentage !== LEVEL_UNKNOWN) {
-    parts.push(batteryText(mouse.batteryPercentage) + " (" + mouse.batteryStatus + ")")
+    parts.push(tr("tooltip.battery", "%1 (%2)")
+      .replace("%1", batteryText(mouse.batteryPercentage, fmt))
+      .replace("%2", batteryStatusLabel(mouse.batteryStatus, tr)))
   }
   if (mouse.dpiX > 0) {
-    parts.push(dpiText(mouse.dpiX, mouse.dpiY) + " DPI")
+    parts.push(tr("value.dpi", "%1 DPI").replace("%1", dpiText(mouse.dpiX, mouse.dpiY, fmt)))
   }
   return parts.join(" · ")
 }
@@ -173,6 +187,7 @@ if (typeof module !== "undefined") {
     mouseIcon: mouseIcon,
     batteryIcon: batteryIcon,
     batteryText: batteryText,
+    batteryStatusLabel: batteryStatusLabel,
     dpiText: dpiText,
     barTooltip: barTooltip,
     actuationLabel: actuationLabel,

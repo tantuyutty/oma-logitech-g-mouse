@@ -15,6 +15,11 @@ Panel {
     property var hostWidget: null
     property var mouse: null
 
+    Translations {
+        id: strings
+        directory: Qt.resolvedUrl("i18n")
+    }
+
     // Active tab: "sensor" or "buttons"
     property string currentTab: "sensor"
 
@@ -139,17 +144,20 @@ Panel {
                     // ── Battery & Telemetry Banner ──
                     Rectangle {
                         width: parent.width
-                        height: Style.space(50)
+                        height: Math.max(Style.space(50), telemetryRow.implicitHeight + Style.space(16))
                         radius: 8
                         color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, root.mouseConnected ? 0.08 : 0.04)
                         border.width: 1
                         border.color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.12)
 
                         Row {
+                            id: telemetryRow
+                            width: parent.width - Style.space(24)
                             anchors.centerIn: parent
                             spacing: Style.space(14)
 
                             Text {
+                                id: telemetryIcon
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.mouseConnected ? Model.batteryIcon(root.batteryPercentage, root.batteryStatus) : "󰍽"
                                 color: root.foreground
@@ -159,11 +167,15 @@ Panel {
                             }
 
                             Column {
+                                width: telemetryRow.width - telemetryIcon.width - telemetryRow.spacing
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Style.space(2)
 
                                 Text {
-                                    text: root.mouseConnected ? "Battery: " + Model.batteryText(root.batteryPercentage) + " (" + root.batteryStatus + ")" : "Disconnected"
+                                    width: parent.width
+                                    wrapMode: Text.WordWrap
+                                    textFormat: Text.PlainText
+                                    text: root.mouseConnected ? strings.t("summary.battery").arg(Model.batteryText(root.batteryPercentage, I18n.formatNumber)).arg(Model.batteryStatusLabel(root.batteryStatus, strings.t)) : strings.t("connection.disconnected")
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.body
@@ -171,7 +183,10 @@ Panel {
                                 }
 
                                 Text {
-                                    text: root.mouseConnected ? "DPI: " + Model.dpiText(root.dpiX, root.dpiY) + " · LOD: " + Model.lodLabel(root.lod) + " · " + root.reportRate + "Hz" : "Check USB connection / permissions"
+                                    width: parent.width
+                                    wrapMode: Text.WordWrap
+                                    textFormat: Text.PlainText
+                                    text: root.mouseConnected ? strings.t("summary.telemetry").arg(Model.dpiText(root.dpiX, root.dpiY, I18n.formatNumber)).arg(Model.lodLabel(root.lod, strings.t)).arg(I18n.formatNumber(root.reportRate)) : strings.t("connection.check")
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.bodySmall
@@ -191,11 +206,11 @@ Panel {
                             model: [
                                 {
                                     id: "sensor",
-                                    label: "Sensor (DPI / Polling)"
+                                    label: strings.t("tab.sensor")
                                 },
                                 {
                                     id: "buttons",
-                                    label: "Buttons (Analog HITS)"
+                                    label: strings.t("tab.buttons")
                                 }
                             ]
                             delegate: Rectangle {
@@ -209,6 +224,7 @@ Panel {
                                 Text {
                                     anchors.centerIn: parent
                                     text: modelData.label
+                                    textFormat: Text.PlainText
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.bodySmall
@@ -238,7 +254,8 @@ Panel {
                             spacing: Style.space(8)
 
                             Text {
-                                text: "SENSITIVITY (DPI)"
+                                textFormat: Text.PlainText
+                                text: strings.t("sensor.sensitivity")
                                 color: root.foreground
                                 font.family: root.fontFamily
                                 font.pixelSize: Style.font.bodySmall
@@ -262,7 +279,8 @@ Panel {
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: String(modelData)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(modelData)
                                             color: root.foreground
                                             font.family: root.fontFamily
                                             font.pixelSize: Style.font.bodySmall
@@ -287,14 +305,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Custom Sensitivity"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("sensor.customSensitivity")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.caption
@@ -302,9 +322,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: Math.round(dpiSlider.dragging ? dpiSlider.liveValue : (root.mouse ? root.mouse.dpiX : 800)) + " DPI"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.dpi").arg(I18n.formatNumber(Math.round(dpiSlider.dragging ? dpiSlider.liveValue : (root.mouse ? root.mouse.dpiX : 800))))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -340,7 +359,8 @@ Panel {
 
                                     Text {
                                         anchors.left: parent.left
-                                        text: String(root.dpiMin)
+                                        textFormat: Text.PlainText
+                                        text: I18n.formatNumber(root.dpiMin)
                                         color: root.foreground
                                         opacity: 0.35
                                         font.family: root.fontFamily
@@ -349,7 +369,8 @@ Panel {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: Math.round(root.dpiMax / 2).toLocaleString()
+                                        textFormat: Text.PlainText
+                                        text: I18n.formatNumber(Math.round(root.dpiMax / 2))
                                         color: root.foreground
                                         opacity: 0.25
                                         font.family: root.fontFamily
@@ -358,7 +379,8 @@ Panel {
 
                                     Text {
                                         anchors.right: parent.right
-                                        text: root.dpiMax.toLocaleString()
+                                        textFormat: Text.PlainText
+                                        text: I18n.formatNumber(root.dpiMax)
                                         color: root.foreground
                                         opacity: 0.35
                                         font.family: root.fontFamily
@@ -381,14 +403,16 @@ Panel {
                             width: parent.width
                             spacing: Style.space(8)
 
-                            Item {
+                            RowLayout {
                                 width: parent.width
-                                height: Style.space(20)
+                                height: Math.max(Style.space(20), implicitHeight)
+                                spacing: Style.space(8)
 
                                 Text {
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "REPORT RATE (POLLING)"
+                                    Layout.fillWidth: true
+                                    wrapMode: Text.WordWrap
+                                    textFormat: Text.PlainText
+                                    text: strings.t("sensor.reportRate")
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.bodySmall
@@ -397,9 +421,8 @@ Panel {
                                 }
 
                                 Text {
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: (root.mouse ? root.mouse.reportRate : 1000) + " Hz"
+                                    textFormat: Text.PlainText
+                                    text: strings.t("value.rate").arg(I18n.formatNumber(root.mouse ? root.mouse.reportRate : 1000))
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.bodySmall
@@ -423,7 +446,8 @@ Panel {
 
                                         Text {
                                             anchors.centerIn: parent
-                                            text: modelData >= 1000 ? (modelData / 1000) + "K" : String(modelData)
+                                            textFormat: Text.PlainText
+                                            text: modelData >= 1000 ? strings.t("value.rateK").arg(I18n.formatNumber(modelData / 1000)) : I18n.formatNumber(modelData)
                                             color: root.foreground
                                             font.family: root.fontFamily
                                             font.pixelSize: Style.font.caption
@@ -453,7 +477,8 @@ Panel {
                             spacing: Style.space(8)
 
                             Text {
-                                text: "SETTINGS SOURCE"
+                                textFormat: Text.PlainText
+                                text: strings.t("profile.title")
                                 color: root.foreground
                                 font.family: root.fontFamily
                                 font.pixelSize: Style.font.bodySmall
@@ -462,11 +487,14 @@ Panel {
                             }
 
                             Text {
+                                width: parent.width
+                                wrapMode: Text.WordWrap
+                                textFormat: Text.PlainText
                                 text: root.onboardProfileMode === "onboard"
-                                    ? "Onboard settings follow this mouse between computers."
+                                    ? strings.t("profile.onboardDescription")
                                     : root.onboardProfileMode === "host"
-                                        ? "Host settings are controlled by this computer."
-                                        : "Profile mode is unavailable."
+                                        ? strings.t("profile.hostDescription")
+                                        : strings.t("profile.unavailable")
                                 color: root.foreground
                                 font.family: root.fontFamily
                                 font.pixelSize: Style.font.caption
@@ -479,8 +507,8 @@ Panel {
 
                                 Repeater {
                                     model: [
-                                        { mode: "host", label: "This Computer" },
-                                        { mode: "onboard", label: "Onboard" }
+                                        { mode: "host", label: strings.t("profile.host") },
+                                        { mode: "onboard", label: strings.t("profile.onboard") }
                                     ]
 
                                     delegate: Rectangle {
@@ -496,6 +524,7 @@ Panel {
                                         Text {
                                             anchors.centerIn: parent
                                             text: modelData.label
+                                            textFormat: Text.PlainText
                                             color: root.foreground
                                             font.family: root.fontFamily
                                             font.pixelSize: Style.font.caption
@@ -539,7 +568,8 @@ Panel {
                                     anchors.left: parent.left
                                     anchors.leftMargin: Style.space(8)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: "LEFT BUTTON"
+                                    textFormat: Text.PlainText
+                                    text: strings.t("buttons.left")
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.caption
@@ -553,14 +583,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Actuation Point"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.actuation")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -568,9 +600,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(leftActSlider.dragging ? leftActSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.actuation : 1)) + " / 10"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(leftActSlider.dragging ? leftActSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.actuation : 1)))).arg(I18n.formatNumber(10))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -608,7 +639,8 @@ Panel {
                                             readonly property int level: index + 1
                                             readonly property int cur: Math.round(leftActSlider.dragging ? leftActSlider.liveValue : leftActSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
@@ -625,14 +657,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Rapid Trigger"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.rapidTrigger")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -640,9 +674,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(leftRtSlider.dragging ? leftRtSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.rapidTrigger : 1)) + " / 5"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(leftRtSlider.dragging ? leftRtSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.rapidTrigger : 1)))).arg(I18n.formatNumber(5))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -680,7 +713,8 @@ Panel {
                                             readonly property int level: index + 1
                                             readonly property int cur: Math.round(leftRtSlider.dragging ? leftRtSlider.liveValue : leftRtSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
@@ -697,14 +731,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Click Haptics"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.haptics")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -712,9 +748,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(leftHapSlider.dragging ? leftHapSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.haptics : 0)) + " / 5"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(leftHapSlider.dragging ? leftHapSlider.liveValue : (root.mouse ? root.mouse.hitsLeft.haptics : 0)))).arg(I18n.formatNumber(5))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -752,7 +787,8 @@ Panel {
                                             readonly property int level: index
                                             readonly property int cur: Math.round(leftHapSlider.dragging ? leftHapSlider.liveValue : leftHapSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
@@ -790,7 +826,8 @@ Panel {
                                     anchors.left: parent.left
                                     anchors.leftMargin: Style.space(8)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: "RIGHT BUTTON"
+                                    textFormat: Text.PlainText
+                                    text: strings.t("buttons.right")
                                     color: root.foreground
                                     font.family: root.fontFamily
                                     font.pixelSize: Style.font.caption
@@ -804,14 +841,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Actuation Point"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.actuation")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -819,9 +858,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(rightActSlider.dragging ? rightActSlider.liveValue : (root.mouse ? root.mouse.hitsRight.actuation : 1)) + " / 10"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(rightActSlider.dragging ? rightActSlider.liveValue : (root.mouse ? root.mouse.hitsRight.actuation : 1)))).arg(I18n.formatNumber(10))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -859,7 +897,8 @@ Panel {
                                             readonly property int level: index + 1
                                             readonly property int cur: Math.round(rightActSlider.dragging ? rightActSlider.liveValue : rightActSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
@@ -876,14 +915,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Rapid Trigger"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.rapidTrigger")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -891,9 +932,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(rightRtSlider.dragging ? rightRtSlider.liveValue : (root.mouse ? root.mouse.hitsRight.rapidTrigger : 1)) + " / 5"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(rightRtSlider.dragging ? rightRtSlider.liveValue : (root.mouse ? root.mouse.hitsRight.rapidTrigger : 1)))).arg(I18n.formatNumber(5))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -931,7 +971,8 @@ Panel {
                                             readonly property int level: index + 1
                                             readonly property int cur: Math.round(rightRtSlider.dragging ? rightRtSlider.liveValue : rightRtSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
@@ -948,14 +989,16 @@ Panel {
                                 width: parent.width
                                 spacing: 0
 
-                                Item {
+                                RowLayout {
                                     width: parent.width
-                                    height: Style.space(20)
+                                    height: Math.max(Style.space(20), implicitHeight)
+                                    spacing: Style.space(8)
 
                                     Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Click Haptics"
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        text: strings.t("buttons.haptics")
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -963,9 +1006,8 @@ Panel {
                                     }
 
                                     Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Level " + Math.round(rightHapSlider.dragging ? rightHapSlider.liveValue : (root.mouse ? root.mouse.hitsRight.haptics : 0)) + " / 5"
+                                        textFormat: Text.PlainText
+                                        text: strings.t("value.level").arg(I18n.formatNumber(Math.round(rightHapSlider.dragging ? rightHapSlider.liveValue : (root.mouse ? root.mouse.hitsRight.haptics : 0)))).arg(I18n.formatNumber(5))
                                         color: root.foreground
                                         font.family: root.fontFamily
                                         font.pixelSize: Style.font.bodySmall
@@ -1003,7 +1045,8 @@ Panel {
                                             readonly property int level: index
                                             readonly property int cur: Math.round(rightHapSlider.dragging ? rightHapSlider.liveValue : rightHapSlider.value)
                                             readonly property bool isCurrent: level === cur
-                                            text: String(level)
+                                            textFormat: Text.PlainText
+                                            text: I18n.formatNumber(level)
                                             color: root.foreground
                                             opacity: isCurrent ? 1.0 : 0.35
                                             font.family: root.fontFamily
