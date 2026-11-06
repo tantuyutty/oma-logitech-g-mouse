@@ -1,4 +1,4 @@
-# Development
+# Contributing
 
 This guide is for contributors. End-user installation and troubleshooting are in [README.md](README.md).
 

@@ -89,7 +89,7 @@ omarchy restart shell
 
 ## Development
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for building the native controller, protocol notes, verification, and release automation.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for building the native controller, protocol notes, verification, and release automation.
 
 ## License
 

@@ -89,7 +89,7 @@ omarchy restart shell
 
 ## 開發
 
-[DEVELOPMENT.md](DEVELOPMENT.md)
+[CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 授權
 
