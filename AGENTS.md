@@ -32,10 +32,10 @@ Features include:
 
 ## Building
 
-The shipped `bin/logitech-g-daemon` is built from `src/main.rs`. Rebuild and install it with:
+The shipped `bin/logitech-g-daemon` is built from `src/main.rs`. Rebuild it with the same pinned Docker environment used by CI, then install it with:
 
 ```bash
-cargo build --release && install -Dm755 target/release/logitech-g-daemon bin/logitech-g-daemon
+scripts/build-controller && install -Dm755 target/container/release/logitech-g-daemon bin/logitech-g-daemon
 ```
 
 `target/` is build output and is gitignored; keep the built binary in `bin/` in sync when changing the driver.

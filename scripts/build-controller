@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly builder_image='rust@sha256:408fe88047cef61a2087653b0c5255fa51c0f2d6d94ddedd7a2562a9b91a46f6'
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source_date_epoch="$(git -C "$repo_root" show -s --format=%ct HEAD)"
+
+docker run --rm \
+  --platform linux/amd64 \
+  --user "$(id -u):$(id -g)" \
+  --mount "type=bind,src=$repo_root,dst=/workspace" \
+  --workdir /workspace \
+  --env HOME=/tmp \
+  --env CARGO_HOME=/tmp/cargo \
+  --env CARGO_TARGET_DIR=/workspace/target/container \
+  --env CARGO_INCREMENTAL=0 \
+  --env "SOURCE_DATE_EPOCH=$source_date_epoch" \
+  "$builder_image" \
+  bash -ceu 'cargo clean && cargo build --locked --release'
+
+printf '{"builder_image":"%s","source_date_epoch":"%s"}\n' \
+  "$builder_image" "$source_date_epoch" > "$repo_root/target/container/build-metadata.json"

@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    io::{self, Read, Write},
     os::unix::fs::OpenOptionsExt,
     thread,
     time::{Duration, Instant},
@@ -18,13 +18,12 @@ pub(crate) struct Device {
 }
 
 impl Device {
-    fn open(path: String) -> Result<Self, String> {
+    fn open(path: String) -> io::Result<Self> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
             .custom_flags(0o4000)
-            .open(&path)
-            .map_err(|e| format!("open {path}: {e}"))?;
+            .open(&path)?;
         Ok(Self {
             file,
             path,
@@ -136,6 +135,43 @@ fn has_hidpp_usage(name: &str) -> bool {
         .is_some_and(|bytes| bytes.windows(3).any(|chunk| chunk == [0x06, 0x00, 0xff]))
 }
 
+fn discovery_error(open_errors: &[(String, io::Error)], opened_candidate: bool) -> String {
+    if open_errors.is_empty() {
+        return if opened_candidate {
+            "Logitech HID++ device found but did not respond.".into()
+        } else {
+            "No Logitech HID++ device found.".into()
+        };
+    }
+
+    let mut message = String::from("Unable to open Logitech HID++ device");
+    if open_errors.len() > 1 {
+        message.push('s');
+    }
+    message.push_str(": ");
+    for (index, (path, error)) in open_errors.iter().enumerate() {
+        if index > 0 {
+            message.push_str("; ");
+        }
+        message.push_str(path);
+        message.push_str(": ");
+        message.push_str(&error.to_string());
+    }
+    message.push('.');
+    if open_errors
+        .iter()
+        .any(|(_, error)| error.kind() == io::ErrorKind::PermissionDenied)
+    {
+        message.push_str(
+            " Desktop-session access requires a udev rule that tags the hidraw interface with `uaccess`.",
+        );
+    }
+    if opened_candidate {
+        message.push_str(" Other Logitech HID++ interfaces opened but did not respond.");
+    }
+    message
+}
+
 fn find_device() -> Result<Device, String> {
     let mut names: Vec<String> = fs::read_dir("/dev")
         .map_err(|e| e.to_string())?
@@ -145,11 +181,18 @@ fn find_device() -> Result<Device, String> {
         .collect();
     names.sort();
     names.sort_by_key(|name| !has_hidpp_usage(name));
+    let mut open_errors = Vec::new();
+    let mut opened_candidate = false;
     for name in names {
-        let mut device = match Device::open(format!("/dev/{name}")) {
+        let path = format!("/dev/{name}");
+        let mut device = match Device::open(path.clone()) {
             Ok(device) => device,
-            Err(_) => continue,
+            Err(error) => {
+                open_errors.push((path, error));
+                continue;
+            }
         };
+        opened_candidate = true;
         if [1, 2, 3, 4, 5, 6, 0xff]
             .into_iter()
             .any(|index| device.ping(index))
@@ -157,7 +200,7 @@ fn find_device() -> Result<Device, String> {
             return Ok(device);
         }
     }
-    Err("No Logitech HID++ device found.".into())
+    Err(discovery_error(&open_errors, opened_candidate))
 }
 
 pub(crate) fn find_ready_device() -> Result<Device, String> {
@@ -172,4 +215,27 @@ pub(crate) fn find_ready_device() -> Result<Device, String> {
     Err(format!(
         "Logitech receiver did not become ready within 5000ms: {last_error}"
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn permission_error_identifies_device_and_uaccess_requirement() {
+        let errors = vec![(
+            "/dev/hidraw7".into(),
+            io::Error::from(io::ErrorKind::PermissionDenied),
+        )];
+
+        let message = discovery_error(&errors, false);
+
+        assert!(
+            message
+                .to_lowercase()
+                .contains("/dev/hidraw7: permission denied")
+        );
+        assert!(message.contains("`uaccess`"));
+        assert!(!message.contains("No Logitech HID++ device found"));
+    }
 }

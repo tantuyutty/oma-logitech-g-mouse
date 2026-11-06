@@ -9,6 +9,7 @@ on:
       - Cargo.lock
       - src/**
       - bin/logitech-g-daemon
+      - scripts/build-controller
       - .github/workflows/release.yml
   workflow_dispatch:
 
@@ -25,21 +26,16 @@ jobs:
 
       - name: Verify bundled controller matches locked source
         shell: bash
-        env:
-          BUILDER_IMAGE: rust@sha256:408fe88047cef61a2087653b0c5255fa51c0f2d6d94ddedd7a2562a9b91a46f6
         run: |
           set -euo pipefail
-          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
-          export CARGO_INCREMENTAL=0
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace" \
-            --workdir /workspace \
-            --env SOURCE_DATE_EPOCH \
-            --env CARGO_INCREMENTAL \
-            "$BUILDER_IMAGE" \
-            bash -ceu 'cargo clean && cargo build --locked --release'
-          cmp --silent target/release/logitech-g-daemon bin/logitech-g-daemon
+          scripts/build-controller
+          if ! cmp --silent target/container/release/logitech-g-daemon bin/logitech-g-daemon; then
+            echo "::error::Bundled controller differs from the pinned build. Run scripts/build-controller and install its output into bin/logitech-g-daemon."
+            sha256sum target/container/release/logitech-g-daemon bin/logitech-g-daemon
+            exit 1
+          fi
+          SOURCE_DATE_EPOCH="$(jq -r '.source_date_epoch' target/container/build-metadata.json)"
+          BUILDER_IMAGE="$(jq -r '.builder_image' target/container/build-metadata.json)"
           mkdir release-assets
           install -Dm755 bin/logitech-g-daemon release-assets/logitech-g-daemon
           sha256sum release-assets/logitech-g-daemon > release-assets/logitech-g-daemon.sha256

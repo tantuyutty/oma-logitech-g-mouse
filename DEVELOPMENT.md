@@ -4,7 +4,8 @@ This guide is for contributors. End-user installation and troubleshooting are in
 
 ## Prerequisites
 
-- Rust stable toolchain.
+- Docker with permission to access its daemon, for reproducible bundled-controller builds.
+- Rust stable toolchain for host-only development and formatting.
 - Omarchy Quattro for QML/plugin validation.
 - A supported Logitech HID++ mouse is required for hardware write verification.
 
@@ -14,6 +15,7 @@ This guide is for contributors. End-user installation and troubleshooting are in
 | ------------------------------- | ----------------------------------------------------------- |
 | `src/main.rs`                   | Native HID++ controller.                                    |
 | `bin/logitech-g-daemon`         | x86_64 Linux executable shipped with the plugin.            |
+| `scripts/build-controller`     | Canonical pinned-container build used locally and in CI.    |
 | `Service.qml`                   | Starts the controller and applies its JSON status.          |
 | `Model.js`                      | Converts controller JSON into QML state.                    |
 | `manifest.json`                 | Marketplace and plugin metadata; canonical release version. |
@@ -26,12 +28,15 @@ The controller communicates directly with `/dev/hidraw` using HID++ 2.0. It dyna
 Build and update the executable shipped in the plugin:
 
 ```bash
-cargo fmt
-cargo build --locked --release
-install -Dm755 target/release/logitech-g-daemon bin/logitech-g-daemon
+scripts/build-controller
+install -Dm755 target/container/release/logitech-g-daemon bin/logitech-g-daemon
 ```
 
-The bundled executable targets x86_64 GNU/Linux. Build it on the target architecture when supporting another platform.
+The helper uses an immutable Rust image pin, the `linux/amd64` platform, and the fixed `/workspace` container path. It builds from scratch with `cargo build --locked --release`, disables incremental compilation, and sets `SOURCE_DATE_EPOCH` from `HEAD`. Container output is isolated in `target/container/`, with image and timestamp metadata in `target/container/build-metadata.json`; host Cargo output and home-directory Cargo configuration are not reused. The container runs as your user so output remains owned by you. Building does not replace the bundled executable: the explicit `install` command above does that.
+
+Docker must be running and your user must be allowed to access its daemon. If Docker reports a permission error, configure daemon access using your system's Docker setup before building.
+
+The bundled executable targets x86_64 GNU/Linux. Other Docker hosts need support for running `linux/amd64` containers. Host `cargo build` is for development only: its toolchain, paths, and environment are not the release recipe.
 
 ### CLI contract
 
@@ -74,8 +79,8 @@ omarchy restart shell
 Verify the native controller before testing the QML surface:
 
 ```bash
-cargo build --locked --release
-./bin/logitech-g-daemon --once
+cargo build --locked
+./target/debug/logitech-g-daemon --once
 ```
 
 Use a no-op write matching the current DPI to exercise a hardware write without changing the configured value:
@@ -86,12 +91,12 @@ Use a no-op write matching the current DPI to exercise a hardware write without 
 
 ## Releases
 
-`manifest.json` is the canonical plugin version. On a push to `main`, `.github/workflows/release.yml` builds the controller from the locked source at the triggering full commit SHA, creates a GitHub Release and `v<version>` tag when that semantic version does not already have a tag, and attaches the CI-built binary, its SHA-256 checksum, and provenance JSON.
+`manifest.json` is the canonical plugin version. On a push to `main`, `.github/workflows/release.yml` runs the same `scripts/build-controller` helper against the locked source at the triggering full commit SHA. CI requires its output to match `bin/logitech-g-daemon` byte-for-byte; any mismatch fails publication, including for an already-tagged version. It creates a GitHub Release and `v<version>` tag when that semantic version does not already have a tag, and attaches the verified binary, its SHA-256 checksum, and provenance JSON recording the image actually used.
 
 To release:
 
 1. Update `manifest.json` to the new semantic version.
-2. Build and update `bin/logitech-g-daemon` if the native controller changed.
+2. Use the container build and explicit install commands above to update `bin/logitech-g-daemon` if the native controller or build recipe changed.
 3. Run the verification commands above.
 4. Commit and push to `main`.
 
