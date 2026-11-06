@@ -68,6 +68,8 @@ Feature indices are always resolved from the connected device. The compatible HI
 
 Keep `BarIconButton.text` icon-only and put battery text in `labelText`. Omarchy 4.5 optically scales the entire `text` value into one icon canvas; combining a percentage and glyph there shrinks both. Follow the built-in power widget by hiding the label and using one icon slot on vertical bars.
 
+The official bar window spans the whole screen. A panel's input mask must exclude only `KeyboardPanel.barThickness`, never `barW` or `barH`; using the window dimensions can leave an empty input region. Keep the shared `KeyboardPanel` transition lifecycle and bar-widget owner forwarding.
+
 After QML or bundled-binary changes, copy the plugin and restart the shell:
 
 ```bash
@@ -75,6 +77,8 @@ omarchy plugin validate .
 cp -a . ~/.config/omarchy/plugins/tantuyu.logitech-g-mouse/
 omarchy restart shell
 ```
+
+With system animations enabled, click Logitech → Audio → Logitech and inspect the transition frames. After each handoff, exercise a real panel control: toggle and restore audio mute, then switch between the Logitech Sensor and Buttons tabs. Also verify Escape and outside-click dismissal. Restart before checking nested QML changes; a plugin hot reload alone can retain cached components.
 
 Verify the native controller before testing the QML surface:
 

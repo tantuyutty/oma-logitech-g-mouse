@@ -76,6 +76,16 @@ Panel {
         contentWidth: panel.fittedContentWidth(Style.space(380))
         contentHeight: panel.fittedContentHeight(content.implicitHeight, Style.space(720))
 
+        // Third-party bar APIs expose only this plugin's click targets.
+        // Let real bar buttons receive clicks instead of forwarding through the overlay.
+        // The bar window is full-screen; exclude only its painted strip.
+        mask: Region {
+            x: panel.barPos === "left" ? panel.barThickness : 0
+            y: panel.barPos === "top" ? panel.barThickness : 0
+            width: panel.screenW - (panel.barPos === "left" || panel.barPos === "right" ? panel.barThickness : 0)
+            height: panel.screenH - (panel.barPos === "top" || panel.barPos === "bottom" ? panel.barThickness : 0)
+        }
+
         PanelKeyCatcher {
             id: keyCatcher
             anchors.fill: parent

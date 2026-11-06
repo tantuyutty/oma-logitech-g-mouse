@@ -34,6 +34,7 @@ omarchy restart shell
 ## Use
 
 - **Left-click** the bar widget to open the control panel.
+- With the panel open, **left-click another bar panel's icon** to switch directly. Transitions follow Omarchy's system animation setting.
 - **Right-click** it to toggle battery percentage text.
 - On Omarchy 4.5, battery text uses a separate label so the icon keeps the shell's standard size. Vertical bars show only the icon.
 - Use **Sensor** to select DPI presets, set DPI in 50-DPI steps, and choose a supported report rate.
