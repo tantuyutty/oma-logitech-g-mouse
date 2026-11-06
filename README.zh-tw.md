@@ -35,6 +35,7 @@ omarchy restart shell
 
 - **左鍵點擊**狀態列小工具以開啟控制面板。
 - **右鍵點擊**切換是否顯示電量百分比。
+- 在 Omarchy 4.5，電量文字與圖示分開顯示，圖示維持系統標準尺寸；垂直狀態列只顯示圖示。
 - 在 **Sensor** 分頁選擇 DPI 預設值、以每次 50 DPI 調整 DPI，或選取滑鼠支援的回報率。
 - 相容的類比按鍵滑鼠可在 **Buttons** 分頁分別設定 Actuation Point、Rapid Trigger 與 Click Haptics。
 

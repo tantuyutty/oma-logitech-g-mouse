@@ -35,6 +35,7 @@ omarchy restart shell
 
 - **Left-click** the bar widget to open the control panel.
 - **Right-click** it to toggle battery percentage text.
+- On Omarchy 4.5, battery text uses a separate label so the icon keeps the shell's standard size. Vertical bars show only the icon.
 - Use **Sensor** to select DPI presets, set DPI in 50-DPI steps, and choose a supported report rate.
 - Use **Buttons** on compatible analog-switch mice to set Actuation Point, Rapid Trigger, and Click Haptics per button.
 

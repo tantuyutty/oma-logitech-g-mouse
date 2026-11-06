@@ -75,17 +75,14 @@ BarWidget {
         bar: root.bar
         active: false
         useActiveColor: false
-        slotSize: Style.bar.iconSlot * (root.showPercentage ? 2.2 : 1.0)
+        slotSize: Style.bar.iconSlot * (root.showPercentage && !vertical ? 2.2 : 1.0)
         tooltipText: Model.barTooltip(mouse)
-        text: {
-            if (!mouse.connected) {
-                return root.showPercentage ? "Off 󰍽" : "󰍽";
-            }
-            var icon = Model.batteryIcon(mouse.batteryPercentage, mouse.batteryStatus);
-            if (!root.showPercentage) {
-                return icon;
-            }
-            return Model.batteryText(mouse.batteryPercentage) + " " + icon;
+        text: mouse.connected
+            ? Model.batteryIcon(mouse.batteryPercentage, mouse.batteryStatus)
+            : Model.mouseIcon()
+        labelText: {
+            if (!root.showPercentage || vertical) return "";
+            return mouse.connected ? Model.batteryText(mouse.batteryPercentage) : "Off";
         }
         onPressed: function (buttonCode) {
             if (buttonCode === Qt.LeftButton) {

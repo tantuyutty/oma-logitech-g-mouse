@@ -61,6 +61,8 @@ Feature indices are always resolved from the connected device. The compatible HI
 
 ## Local development
 
+Keep `BarIconButton.text` icon-only and put battery text in `labelText`. Omarchy 4.5 optically scales the entire `text` value into one icon canvas; combining a percentage and glyph there shrinks both. Follow the built-in power widget by hiding the label and using one icon slot on vertical bars.
+
 After QML or bundled-binary changes, copy the plugin and restart the shell:
 
 ```bash
